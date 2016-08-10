@@ -1023,19 +1023,19 @@ class WordHinter:
 
     def __init__(self):
         # will be initialized on first use.
-        self.words = set()
-        self.dictionary = None
+        self.words = {"one", "two", "three", "four", "five", "six", "seven",
+                "eight", "nine", "ten", "eleven", "twelve", "thirteen"}
+        self.dictionary = ""
 
     def ensure_initialized(self):
         """Generate the used words if yet uninitialized."""
         dictionary = config.get("hints", "dictionary")
-        if not self.words or self.dictionary != dictionary:
-            self.words.clear()
+        if not self.words or (dictionary and self.dictionary != dictionary):
             self.dictionary = dictionary
             try:
+                alphabet = set(ascii_lowercase)
+                hints = set()
                 with open(dictionary, encoding="UTF-8") as wordfile:
-                    alphabet = set(ascii_lowercase)
-                    hints = set()
                     lines = (line.rstrip().lower() for line in wordfile)
                     for word in lines:
                         if set(word) - alphabet:
@@ -1048,10 +1048,10 @@ class WordHinter:
                             # remove all prefixes of this word
                             hints.discard(word[:i + 1])
                         hints.add(word)
-                    self.words.update(hints)
+                if hints:
+                    self.words = hints
             except IOError as e:
-                error = "Word hints requires reading the file at {}: {}"
-                raise HintingError(error.format(dictionary, str(e)))
+                pass
 
     def extract_tag_words(self, elem):
         """Extract tag words form the given element."""
@@ -1122,7 +1122,8 @@ class WordHinter:
         for elem in elems:
             hint = self.new_hint_for(elem, used_hints, words)
             if not hint:
-                raise HintingError("Not enough words in the dictionary.")
+                raise HintingError("Not enough words in the dictionary. Have "
+                        "you configured the 'hints -> dictionary' setting?")
             used_hints.add(hint)
             hints.append(hint)
         return hints
